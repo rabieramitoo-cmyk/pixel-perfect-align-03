@@ -152,13 +152,13 @@
 }
 
 .aurora {
-  position: fixed; inset: -20%; z-index: 0; pointer-events: none;
+  position: fixed; inset: -10%; z-index: 0; contain: strict; pointer-events: none;
   opacity: var(--aurora-opacity);
   background:
     radial-gradient(40% 35% at 20% 20%, var(--gold-from), transparent 70%),
     radial-gradient(35% 30% at 80% 10%, var(--gold-to), transparent 70%),
     radial-gradient(45% 40% at 60% 85%, oklch(0.7 0.08 60 / 60%), transparent 70%);
-  filter: blur(60px);
+  filter: blur(40px);
   animation: aurora 28s ease-in-out infinite alternate;
   will-change: transform;
 }
