@@ -14,13 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      tasks: {
+        Row: {
+          brand: string
+          brand_color: string
+          created_at: string
+          done: boolean
+          id: string
+          position: number
+          priority: string
+          streak: number
+          task_date: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string
+          brand_color?: string
+          created_at?: string
+          done?: boolean
+          id?: string
+          position?: number
+          priority?: string
+          streak?: number
+          task_date?: string
+          title: string
+          user_id?: string
+        }
+        Update: {
+          brand?: string
+          brand_color?: string
+          created_at?: string
+          done?: boolean
+          id?: string
+          position?: number
+          priority?: string
+          streak?: number
+          task_date?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      owner_exists: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
