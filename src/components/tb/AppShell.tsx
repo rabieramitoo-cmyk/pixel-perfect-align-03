@@ -1,4 +1,4 @@
-import { Link, Navigate, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Command, LogOut, Moon, MoreHorizontal, Search, Settings, Sun } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -100,10 +100,11 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
     const k = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setCmd((o) => !o); } };
     window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k);
   }, []);
-  useEffect(() => setMore(false), [pathname]);
+  useEffect(() => { setMore(false); }, [pathname]);
+  const navigate = useNavigate();
+  useEffect(() => { if (!loading && !session) navigate({ to: "/login", replace: true }); }, [loading, session, navigate]);
 
-  if (loading) return <div className="min-h-screen bg-background p-8"><Backdrop /><Skeleton className="mx-auto mt-24 h-64 max-w-5xl" /></div>;
-  if (!session) return <Navigate to="/login" />;
+  if (loading || !session) return <div className="min-h-screen bg-background p-8"><Backdrop /><Skeleton className="mx-auto mt-24 h-64 max-w-5xl" /></div>;
 
   const moreActive = moreNav.some((m) => m.to === pathname);
 
