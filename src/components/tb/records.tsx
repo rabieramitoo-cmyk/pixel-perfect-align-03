@@ -29,7 +29,7 @@ export function useLookup() {
 }
 
 /* ---------------- sheet context ---------------- */
-type Frame = { type: EntityType; id: string | null; defaults?: Record<string, unknown> };
+type Frame = { type: EntityType; id: string | null; defaults?: Record<string, unknown> | undefined };
 type Ctx = { open: (type: EntityType, id: string) => void; openNew: (type: EntityType, defaults?: Record<string, unknown>) => void };
 const RecordCtx = createContext<Ctx>({ open: () => {}, openNew: () => {} });
 export const useRecords = () => useContext(RecordCtx);
@@ -72,7 +72,7 @@ export function StatusBadge({ status }: { status?: string | null }) {
   return <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider", statusTone[status] ?? "text-muted-foreground")}>{status}</span>;
 }
 
-export function FlagBadge({ reason }: { reason?: string | null }) {
+export function FlagBadge({ reason }: { reason?: string | null | undefined }) {
   if (!reason) return null;
   return <span title={reason} className="inline-flex items-center gap-1 rounded-full border border-danger/30 px-2 py-0.5 text-[10px] font-medium text-danger"><Flag className="h-3 w-3" />{reason}</span>;
 }
@@ -184,7 +184,7 @@ function RecordSheet({ frame, canBack, onBack, onClose, onCreated }: { frame: Fr
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const set = (k: string, v: unknown) => { setDraft((d) => ({ ...d, [k]: v })); setDirty(true); };
+  const set = (k: string, v: unknown) => { setDraft((d: Record<string, unknown>) => ({ ...d, [k]: v })); setDirty(true); };
 
   const save = async () => {
     setSaving(true); setErr(null);
@@ -267,7 +267,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: string | undefined }) {
   return (
     <div className="rounded-[14px] border bg-background/40 p-3">
       <div className="text-[11px] text-muted-foreground">{label}</div>

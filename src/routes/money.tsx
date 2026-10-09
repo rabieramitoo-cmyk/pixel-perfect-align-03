@@ -69,7 +69,7 @@ function MoneyPage() {
   );
 }
 
-function Breakdown({ rows, fmt }: { rows: { key: string; label: React.ReactNode; t?: { revenue: number; spend: number; expenses: number; profit: number } }[]; fmt: (n: number) => string }) {
+function Breakdown({ rows, fmt }: { rows: { key: string; label: React.ReactNode; t?: { revenue: number; spend: number; expenses: number; profit: number } | undefined }[]; fmt: (n: number) => string }) {
   const max = Math.max(1, ...rows.map((r) => Math.abs(r.t?.profit ?? 0)));
   return (
     <div className="space-y-3">
