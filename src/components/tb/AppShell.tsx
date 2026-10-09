@@ -104,7 +104,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
   const navigate = useNavigate();
   useEffect(() => { if (!loading && !session) navigate({ to: "/login", replace: true }); }, [loading, session, navigate]);
 
-  if (loading || !session) return <div className="min-h-screen bg-background" />;
+  if (loading || !session) return <div className="min-h-screen bg-background p-8"><Skeleton className="mx-auto mt-24 h-64 max-w-5xl" /></div>;
 
   const moreActive = moreNav.some((m) => m.to === pathname);
 
