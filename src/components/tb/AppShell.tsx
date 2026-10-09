@@ -12,17 +12,17 @@ import { cn } from "@/lib/utils";
 import { allNav, moreNav, primaryNav } from "./nav-config";
 import { Backdrop, Skeleton } from "./primitives";
 
-function RiyadhClock() {
+function LocalClock() {
   const [t, setT] = useState<string>("");
   useEffect(() => {
-    const f = () => setT(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date()));
+    const f = () => setT(new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Casablanca", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date()));
     f(); const i = setInterval(f, 1000); return () => clearInterval(i);
   }, []);
   return (
     <div className="hidden items-center gap-2 rounded-full border px-3 py-1.5 text-xs sm:flex">
       <span className="h-1.5 w-1.5 rounded-full bg-success" />
       <span className="tnum font-medium">{t || "--:--:--"}</span>
-      <span className="text-muted-foreground">RUH</span>
+      <span className="text-muted-foreground">CAS</span>
     </div>
   );
 }
@@ -164,7 +164,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
             </div>
           </nav>
           <div className="flex items-center gap-2">
-            <RiyadhClock />
+            <LocalClock />
             <button onClick={() => setCmd(true)} aria-label="Command palette" className="hidden h-10 items-center gap-1.5 rounded-full border px-3 text-xs text-muted-foreground hover:bg-accent sm:flex">
               <Command className="h-3.5 w-3.5" /> K
             </button>
