@@ -11,7 +11,7 @@ export function PageHeader({ title, blurb }: { title: string; blurb: string }) {
   );
 }
 
-export function StatCard({ label, value, tone, sub, delay = 0 }: { label: string; value: ReactNode; tone?: string; sub?: ReactNode; delay?: number }) {
+export function StatCard({ label, value, tone, sub, delay = 0 }: { label: string; value: ReactNode; tone?: string | undefined; sub?: ReactNode; delay?: number }) {
   return (
     <GlowCard delay={delay} className="flex flex-col gap-2">
       <div className="text-xs text-muted-foreground">{label}</div>
