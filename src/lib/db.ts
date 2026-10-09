@@ -3,7 +3,7 @@ import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-quer
 import { supabase } from "@/integrations/supabase/client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Row = { id: string; [k: string]: any };
+export type Row = any;
 
 export const TABLES = [
   "brands", "people", "business_managers", "profile_bm_roles", "bm_partners", "pages", "datasets", "domains",
