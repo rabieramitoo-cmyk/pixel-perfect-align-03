@@ -12,7 +12,16 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AuthProvider } from "@/lib/auth";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { useBootstrap, useRealtimeSync } from "@/lib/db";
+import { RecordProvider } from "@/components/tb/records";
+
+function DataSync() {
+  const { session } = useAuth();
+  useRealtimeSync(!!session);
+  useBootstrap(!!session);
+  return null;
+}
 
 function NotFoundComponent() {
   return (
@@ -99,7 +108,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
+        <DataSync />
+        <RecordProvider>
+          <Outlet />
+        </RecordProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
