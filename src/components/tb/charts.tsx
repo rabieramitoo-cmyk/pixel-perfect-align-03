@@ -79,8 +79,8 @@ export function ProfitChart() {
               content={({ active, payload }) =>
                 active && payload?.length ? (
                   <div className="glass rounded-[14px] px-3 py-2 text-xs shadow-glow">
-                    <div className="text-muted-foreground">{payload[0].payload.label}</div>
-                    <div className="tnum font-display text-sm font-semibold text-gold">SAR {fmtSAR(payload[0].value as number)}</div>
+                    <div className="text-muted-foreground">{payload[0]!.payload.label}</div>
+                    <div className="tnum font-display text-sm font-semibold text-gold">SAR {fmtSAR(payload[0]!.value as number)}</div>
                   </div>
                 ) : null
               }

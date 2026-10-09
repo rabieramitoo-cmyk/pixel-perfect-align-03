@@ -25,7 +25,7 @@ export function getProfitHistory(days = 90): DayProfit[] {
 
 export function getKpis(): Kpi[] {
   const h = getProfitHistory(14);
-  const t = h[h.length - 1], y = h[h.length - 2];
+  const t = h[h.length - 1]!, y = h[h.length - 2]!;
   const roas = (x: DayProfit) => +(x.revenue / x.spend).toFixed(2);
   return [
     { key: "spend", label: "Ad Spend Today", value: t.spend, prev: y.spend, format: "sar", spark: h.map((x) => x.spend) },
@@ -38,7 +38,7 @@ export function getKpis(): Kpi[] {
 export function getStreak(): number {
   const h = getProfitHistory(90);
   let s = 0;
-  for (let i = h.length - 1; i >= 0 && h[i].profit > 0; i--) s++;
+  for (let i = h.length - 1; i >= 0 && h[i]!.profit > 0; i--) s++;
   return s;
 }
 

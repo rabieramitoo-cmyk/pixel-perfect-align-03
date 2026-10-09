@@ -92,7 +92,7 @@ export function ProgressRing({ value, size = 200, stroke = 14, children }: { val
 export function Sparkline({ data, positive = true }: { data: number[]; positive?: boolean }) {
   const w = 96, h = 32;
   const min = Math.min(...data), max = Math.max(...data);
-  const pts = data.map((v, i) => [(i / (data.length - 1)) * w, h - ((v - min) / (max - min || 1)) * (h - 4) - 2]);
+  const pts: [number, number][] = data.map((v, i) => [(i / (data.length - 1)) * w, h - ((v - min) / (max - min || 1)) * (h - 4) - 2]);
   const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
   return (
     <svg width={w} height={h} className="overflow-visible">

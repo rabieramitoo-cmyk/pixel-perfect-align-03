@@ -61,7 +61,7 @@ export function TaskList() {
   const date = riyadhDate();
   const { data: tasks, isLoading } = useTodayTasks();
   const [title, setTitle] = useState("");
-  const [brand, setBrand] = useState(brands[0].name);
+  const [brand, setBrand] = useState(brands[0]!.name);
   const [prio, setPrio] = useState("medium");
   const [celebrate, setCelebrate] = useState(false);
 
