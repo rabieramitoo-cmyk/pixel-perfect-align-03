@@ -4,8 +4,9 @@ import { ArrowDownRight, ArrowUpRight, Flame } from "lucide-react";
 import { AppShell } from "@/components/tb/AppShell";
 import { CountUp, GlowCard, Pill, ProgressRing, Sparkline } from "@/components/tb/primitives";
 import { TaskList, useTodayTasks } from "@/components/tb/TaskList";
-import { AccountsHealth, ProfitChart, ProfitHeatmap } from "@/components/tb/charts";
-import { getKpis, getStreak } from "@/lib/demo-data";
+import { AccountsHealth, ActivityFeed, OrderFunnel, ProfitChart, ProfitHeatmap } from "@/components/tb/charts";
+import { useMetrics } from "@/lib/metrics";
+import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -34,10 +35,20 @@ function Today() {
 }
 
 function TodayBody() {
-  const { data: tasks = [] } = useTodayTasks();
+  const tasks = useTodayTasks();
+  const M = useMetrics();
+  const { fromUSD, symbol } = useCurrency();
   const done = tasks.filter((t) => t.done).length;
   const pct = tasks.length ? done / tasks.length : 0;
-  const kpis = getKpis();
+  const t = M.series[M.series.length - 1]!, y = M.series[M.series.length - 2]!;
+  const last14 = M.series.slice(-14);
+  const roas = (d: { revenue: number; spend: number }) => (d.spend ? d.revenue / d.spend : 0);
+  const kpis = [
+    { key: "spend", label: "Ad Spend Today", value: t.spend, prev: y.spend, money: true, spark: last14.map((d) => d.spend) },
+    { key: "revenue", label: "Revenue Today", value: t.revenue, prev: y.revenue, money: true, spark: last14.map((d) => d.revenue) },
+    { key: "profit", label: "Net Profit Today", value: t.profit, prev: y.profit, money: true, spark: last14.map((d) => d.profit) },
+    { key: "roas", label: "ROAS", value: roas(t), prev: roas(y), money: false, spark: last14.map(roas) },
+  ];
   const date = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
   return (
@@ -47,7 +58,7 @@ function TodayBody() {
           <p className="text-sm text-muted-foreground">{date}</p>
           <h1 className="font-display text-4xl font-semibold md:text-5xl">{greeting()}, <span className="text-gold-gradient">Rabie</span></h1>
         </div>
-        <Pill className="text-gold"><Flame className="h-3.5 w-3.5" /><span className="tnum">{getStreak()}</span> profitable days</Pill>
+        <Pill className="text-gold"><Flame className="h-3.5 w-3.5" /><span className="tnum">{M.streak}</span> profitable days</Pill>
       </motion.div>
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
@@ -67,7 +78,7 @@ function TodayBody() {
               <GlowCard key={k.key} delay={0.05 * i} className="flex flex-col justify-between gap-4">
                 <div className="text-xs text-muted-foreground">{k.label}</div>
                 <div className="font-display text-2xl font-semibold md:text-3xl">
-                  {k.format === "sar" ? <CountUp value={k.value} prefix="SAR " /> : <CountUp value={k.value} decimals={2} suffix="×" />}
+                  {k.money ? <CountUp value={fromUSD(k.value)} prefix={symbol} /> : <CountUp value={k.value} decimals={2} suffix="×" />}
                 </div>
                 <div className="flex items-end justify-between">
                   <span className={cn("tnum flex items-center text-xs font-medium", good ? "text-success" : "text-danger")}>
@@ -96,6 +107,11 @@ function TodayBody() {
       </div>
 
       <GlowCard tilt={false} delay={0.3}><AccountsHealth /></GlowCard>
+
+      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+        <GlowCard delay={0.35}><OrderFunnel /></GlowCard>
+        <GlowCard tilt={false} delay={0.4}><ActivityFeed /></GlowCard>
+      </div>
     </div>
   );
 }
