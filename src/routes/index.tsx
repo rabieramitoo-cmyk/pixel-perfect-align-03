@@ -62,7 +62,7 @@ function TodayBody() {
       </motion.div>
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-        <GlowCard className="flex flex-col items-center justify-center py-8" tilt={false}>
+        <GlowCard className="py-8" contentClassName="flex h-full flex-col items-center justify-center" tilt={false}>
           <ProgressRing value={pct}>
             <CountUp value={Math.round(pct * 100)} suffix="%" className="font-display text-5xl font-semibold" />
             <span className="tnum mt-1 text-sm text-muted-foreground">{done} / {tasks.length} tasks</span>
@@ -75,7 +75,7 @@ function TodayBody() {
             const delta = k.prev ? ((k.value - k.prev) / Math.abs(k.prev)) * 100 : 0;
             const good = k.key === "spend" ? delta <= 0 : delta >= 0;
             return (
-              <GlowCard key={k.key} delay={0.05 * i} className="flex flex-col justify-between gap-4">
+              <GlowCard key={k.key} delay={0.05 * i} contentClassName="flex h-full flex-col justify-between gap-4">
                 <div className="text-xs text-muted-foreground">{k.label}</div>
                 <div className="font-display text-2xl font-semibold md:text-3xl">
                   {k.money ? <CountUp value={fromUSD(k.value)} prefix={symbol} /> : <CountUp value={k.value} decimals={2} suffix="×" />}
@@ -102,7 +102,7 @@ function TodayBody() {
       </GlowCard>
 
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-        <GlowCard delay={0.2}><ProfitHeatmap /></GlowCard>
+        <GlowCard delay={0.2} contentClassName="flex h-full flex-col"><ProfitHeatmap /></GlowCard>
         <GlowCard tilt={false} delay={0.25}><ProfitChart /></GlowCard>
       </div>
 

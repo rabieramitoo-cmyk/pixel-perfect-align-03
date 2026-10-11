@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Command, FileText, LogOut, Moon, MoreHorizontal, Search, Settings, Sun, type LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { ENTITIES, ENTITY_TYPES } from "@/lib/entities";
 import { useLookup, useRecords } from "./records";
 import { SettingsDialog } from "./SettingsDialog";
@@ -19,7 +19,7 @@ function LocalClock() {
     f(); const i = setInterval(f, 1000); return () => clearInterval(i);
   }, []);
   return (
-    <div className="hidden items-center gap-2 rounded-full border px-3 py-1.5 text-xs sm:flex">
+    <div className="hidden items-center gap-2 rounded-full border px-3 py-1.5 text-xs xl:flex">
       <span className="h-1.5 w-1.5 rounded-full bg-success" />
       <span className="tnum font-medium">{t || "--:--:--"}</span>
       <span className="text-muted-foreground">CAS</span>
@@ -102,12 +102,28 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
   );
 }
 
-function NavPill({ item, active }: { item: (typeof allNav)[number]; active: boolean }) {
+const NAV_SPRING = { type: "spring", stiffness: 400, damping: 32 } as const;
+
+/** Close a popover on outside click or Escape. */
+function useDismiss(open: boolean, ref: RefObject<HTMLElement | null>, close: () => void) {
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) close(); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", down); document.removeEventListener("keydown", key); };
+  }, [open, ref, close]);
+}
+
+// The desktop and mobile bars are both in the DOM, so each needs its own layoutId. If they share one,
+// framer-motion hands the shared highlight to the hidden mobile bar and the desktop active pill loses its background.
+function NavPill({ item, active, layoutId }: { item: (typeof allNav)[number]; active: boolean; layoutId: string }) {
   return (
-    <Link to={item.to} className={cn("relative flex h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium transition-colors md:h-9", active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
-      {active && <motion.span layoutId="nav-active" className="absolute inset-0 rounded-full bg-gold-gradient shadow-glow" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
+    <Link to={item.to} aria-label={item.label} aria-current={active ? "page" : undefined} className={cn("relative flex h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium transition-colors md:h-9", active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+      {active && <motion.span layoutId={layoutId} className="absolute inset-0 rounded-full bg-gold-gradient shadow-glow" transition={NAV_SPRING} />}
       <item.icon className="relative h-4 w-4" />
-      <span className="relative hidden lg:inline">{item.label}</span>
+      <span className={cn("relative", active ? "inline" : "hidden lg:inline")}>{item.label}</span>
     </Link>
   );
 }
@@ -117,42 +133,51 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
   const { pathname } = useLocation();
   const [cmd, setCmd] = useState(false);
   const [more, setMore] = useState(false);
+  const [moreM, setMoreM] = useState(false);
   const [settings, setSettings] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const moreMRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setCmd((o) => !o); } };
     window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k);
   }, []);
-  useEffect(() => { setMore(false); }, [pathname]);
+  useEffect(() => { setMore(false); setMoreM(false); }, [pathname]);
+  useDismiss(more, moreRef, () => setMore(false));
+  useDismiss(moreM, moreMRef, () => setMoreM(false));
   const navigate = useNavigate();
   useEffect(() => { if (!loading && !session) navigate({ to: "/login", replace: true }); }, [loading, session, navigate]);
 
   if (loading || !session) return <div className="min-h-screen bg-background p-8"><Skeleton className="mx-auto mt-24 h-64 max-w-5xl" /></div>;
 
-  const moreActive = moreNav.some((m) => m.to === pathname);
+  const activeMore = moreNav.find((m) => m.to === pathname);
+  const moreActive = !!activeMore;
+  // When the current page lives under "More", the button shows that page's name and icon instead of "More".
+  const MoreIcon = activeMore?.icon ?? MoreHorizontal;
 
   return (
     <div className="relative min-h-screen bg-background">
       <Backdrop />
       <header className="sticky top-0 z-50 px-4 pt-4">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+        {/* Three-column grid (title | nav | actions) so the nav can never collide with the buttons on the right. */}
+        <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto] items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
           <div className="min-w-0">
             <div className="smallcaps text-[11px] text-muted-foreground">The Billionaire</div>
             <div className="smallcaps truncate font-display text-sm font-semibold">{title}</div>
           </div>
-          {/* Desktop centered pill nav */}
-          <nav className="glass absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full p-1 md:flex">
-            {primaryNav.map((n) => <NavPill key={n.to} item={n} active={pathname === n.to} />)}
-            <div className="relative">
-              <button onClick={() => setMore((m) => !m)} className={cn("relative flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium", moreActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
-                {moreActive && <motion.span layoutId="nav-active" className="absolute inset-0 rounded-full bg-gold-gradient shadow-glow" />}
-                <MoreHorizontal className="relative h-4 w-4" />
-                <span className="relative hidden lg:inline">More</span>
+          {/* Desktop pill nav */}
+          <nav className="glass hidden items-center gap-1 rounded-full p-1 md:flex">
+            {primaryNav.map((n) => <NavPill key={n.to} item={n} active={pathname === n.to} layoutId="nav-active-desktop" />)}
+            <div ref={moreRef} className="relative">
+              <button onClick={() => setMore((m) => !m)} aria-expanded={more} aria-haspopup="menu" aria-label={activeMore?.label ?? "More"} className={cn("relative flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors", moreActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+                {moreActive && <motion.span layoutId="nav-active-desktop" className="absolute inset-0 rounded-full bg-gold-gradient shadow-glow" transition={NAV_SPRING} />}
+                <MoreIcon className="relative h-4 w-4" />
+                <span className={cn("relative", moreActive ? "inline" : "hidden lg:inline")}>{activeMore?.label ?? "More"}</span>
                 <ChevronDown className={cn("relative h-3 w-3 transition-transform", more && "rotate-180")} />
               </button>
               <AnimatePresence>
                 {more && (
-                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="glass absolute right-0 top-12 w-44 rounded-[18px] p-1.5 shadow-card">
+                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="absolute right-0 top-12 w-44 rounded-[18px] border bg-popover p-1.5 shadow-card">
                     {moreNav.map((m) => (
                       <Link key={m.to} to={m.to} className={cn("flex items-center gap-2.5 rounded-[12px] px-3 py-2 text-sm hover:bg-accent", pathname === m.to && "text-gold")}>
                         <m.icon className="h-4 w-4" /> {m.label}
@@ -163,7 +188,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
               </AnimatePresence>
             </div>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <LocalClock />
             <button onClick={() => setCmd(true)} aria-label="Command palette" className="hidden h-10 items-center gap-1.5 rounded-full border px-3 text-xs text-muted-foreground hover:bg-accent sm:flex">
               <Command className="h-3.5 w-3.5" /> K
@@ -183,8 +208,28 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
 
       {/* Mobile bottom bar */}
       <nav className="glass fixed inset-x-4 bottom-4 z-50 flex items-center justify-around rounded-full p-1.5 shadow-card md:hidden">
-        {primaryNav.map((n) => <NavPill key={n.to} item={n} active={pathname === n.to} />)}
-        <button onClick={() => setCmd(true)} aria-label="More" className={cn("grid h-11 w-11 place-items-center rounded-full", moreActive ? "text-gold" : "text-muted-foreground")}><MoreHorizontal className="h-4 w-4" /></button>
+        {primaryNav.map((n) => <NavPill key={n.to} item={n} active={pathname === n.to} layoutId="nav-active-mobile" />)}
+        <div ref={moreMRef} className="relative">
+          <button onClick={() => setMoreM((m) => !m)} aria-expanded={moreM} aria-haspopup="menu" aria-label={activeMore?.label ?? "More"} className={cn("relative flex h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium transition-colors", moreActive ? "text-primary-foreground" : "text-muted-foreground")}>
+            {moreActive && <motion.span layoutId="nav-active-mobile" className="absolute inset-0 rounded-full bg-gold-gradient shadow-glow" transition={NAV_SPRING} />}
+            <MoreIcon className="relative h-4 w-4" />
+            {activeMore && <span className="relative">{activeMore.label}</span>}
+          </button>
+          <AnimatePresence>
+            {moreM && (
+              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="absolute bottom-full right-0 mb-3 w-52 rounded-[18px] border bg-popover p-1.5 shadow-card">
+                {moreNav.map((m) => (
+                  <Link key={m.to} to={m.to} className={cn("flex items-center gap-2.5 rounded-[12px] px-3 py-3 text-sm hover:bg-accent", pathname === m.to && "text-gold")}>
+                    <m.icon className="h-4 w-4" /> {m.label}
+                  </Link>
+                ))}
+                <button onClick={() => { setMoreM(false); setCmd(true); }} className="flex w-full items-center gap-2.5 rounded-[12px] px-3 py-3 text-left text-sm text-muted-foreground hover:bg-accent">
+                  <Search className="h-4 w-4" /> Search
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </nav>
 
       <CommandPalette open={cmd} onClose={() => setCmd(false)} />

@@ -62,7 +62,8 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   );
 }
 
-const themeScript = `(function(){try{var t=localStorage.getItem('tb-theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})();`;
+// The server always renders <html class="dark">, so this must also REMOVE the class when the saved theme is light.
+const themeScript = `(function(){try{var t=localStorage.getItem('tb-theme');document.documentElement.classList.toggle('dark',t!=='light')}catch(e){document.documentElement.classList.add('dark')}})();`;
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({

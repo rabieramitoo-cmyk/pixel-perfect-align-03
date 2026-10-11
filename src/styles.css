@@ -60,7 +60,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.19 0.01 80);
   --primary: oklch(0.67 0.1 78);
-  --primary-foreground: oklch(0.99 0.005 85);
+  --primary-foreground: oklch(0.19 0.01 80);
   --secondary: oklch(0.955 0.01 85);
   --secondary-foreground: oklch(0.19 0.01 80);
   --muted: oklch(0.95 0.008 85);
@@ -141,6 +141,12 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+/* Light mode: the pale gold gradient is unreadable as text on a white background, so use a deeper gold. */
+html:not(.dark) .text-gold-gradient {
+  background: linear-gradient(135deg, oklch(0.62 0.1 78), oklch(0.5 0.09 72));
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 @utility bg-gold-gradient { background: var(--gradient-gold); }
 @utility shadow-card { box-shadow: var(--shadow-card); }

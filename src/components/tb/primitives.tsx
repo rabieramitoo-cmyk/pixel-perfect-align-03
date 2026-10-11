@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from "re
 import { cn } from "@/lib/utils";
 
 /** Card with cursor-follow gold spotlight and gentle 3D tilt. */
-export function GlowCard({ children, className, tilt = true, delay = 0 }: { children: ReactNode; className?: string; tilt?: boolean; delay?: number }) {
+export function GlowCard({ children, className, contentClassName, tilt = true, delay = 0 }: { children: ReactNode; className?: string; /** Layout classes for the content wrapper (the root only wraps it, so flex/justify here, not on className). */ contentClassName?: string; tilt?: boolean; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const rx = useSpring(0, { stiffness: 200, damping: 20 });
@@ -28,7 +28,7 @@ export function GlowCard({ children, className, tilt = true, delay = 0 }: { chil
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
       style={{ rotateX: rx, rotateY: ry, transformPerspective: 900 }}
-      className={cn("relative overflow-hidden rounded-[24px] border bg-card p-5 shadow-card", className)}
+      className={cn("relative flex flex-col overflow-hidden rounded-[24px] border bg-card p-5 shadow-card", className)}
     >
       <div
         aria-hidden
@@ -38,7 +38,7 @@ export function GlowCard({ children, className, tilt = true, delay = 0 }: { chil
           background: `radial-gradient(420px circle at ${pos.x}% ${pos.y}%, var(--gold-soft), transparent 45%)`,
         }}
       />
-      <div className="relative">{children}</div>
+      <div className={cn("relative flex-1", contentClassName)}>{children}</div>
     </motion.div>
   );
 }

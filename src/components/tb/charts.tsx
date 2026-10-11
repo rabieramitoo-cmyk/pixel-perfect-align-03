@@ -18,7 +18,7 @@ export function ProfitHeatmap() {
   const [hover, setHover] = useState<number | null>(null);
   const h = hover !== null ? data[hover] : null;
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <div className="mb-4 flex items-end justify-between">
         <div>
           <h3 className="font-display text-base font-semibold">Profit Heatmap</h3>
@@ -31,7 +31,7 @@ export function ProfitHeatmap() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-10 gap-1.5">
+      <div className="grid flex-1 grid-cols-10 content-center gap-1.5">
         {data.map((d, i) => {
           const intensity = d.profit === 0 ? 0.08 : 0.15 + (Math.abs(d.profit) / max) * 0.85;
           return (
