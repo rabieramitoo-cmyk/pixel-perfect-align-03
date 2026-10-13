@@ -4,6 +4,7 @@ import { AppShell } from "@/components/tb/AppShell";
 import { EntityList, Tabs } from "@/components/tb/EntityList";
 import { PageHeader } from "@/components/tb/PageHeader";
 import { GlowCard } from "@/components/tb/primitives";
+import { RangeSwitcher } from "@/components/tb/RangeSwitcher";
 import { EntityChip, StatusBadge, useLookup, useRecords } from "@/components/tb/records";
 import { useTable, useTableLoading } from "@/lib/db";
 import { useCurrency } from "@/lib/currency";
@@ -45,6 +46,8 @@ function AdAccounts() {
   const { fmt } = useCurrency();
   const campaigns = useTable("campaigns");
   return (
+    <>
+    <RangeSwitcher className="mb-4" />
     <GlowCard tilt={false}>
       <EntityList type="ad_accounts" rows={rows} loading={loading} columns={[
         { label: "Account", cell: (r) => <span className="font-medium">{r.name}</span> },
@@ -53,10 +56,11 @@ function AdAccounts() {
         { label: "Brand", cell: (r) => <EntityChip type="brands" id={r.brand_id} /> },
         { label: "BM", cell: (r) => <EntityChip type="business_managers" id={r.bm_id} /> },
         { label: "Campaigns", cell: (r) => <span className="tnum">{campaigns.filter((c) => c.ad_account_id === r.id).length}</span> },
-        { label: "Spend 30D", className: "text-right", cell: (r) => <span className="tnum">{fmt(totalsOf(M.perAccount, r.id).spend)}</span> },
+        { label: `Spend · ${M.range.short}`, className: "text-right", cell: (r) => <span className="tnum">{fmt(totalsOf(M.perAccount, r.id).spend)}</span> },
         { label: "Spanda", cell: (r) => <span className="tnum text-xs text-muted-foreground">{r.spanda_expires_at ?? "—"}</span> },
       ]} />
     </GlowCard>
+    </>
   );
 }
 

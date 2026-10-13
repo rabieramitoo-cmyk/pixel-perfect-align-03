@@ -289,15 +289,15 @@ function Related({ type, row }: { type: EntityType; row: Row }) {
   const stats = (() => {
     if (type === "brands") {
       const t = totalsOf(M.perBrand, row.id); const r = rates(t);
-      return [["Revenue 30D", fmt(t.revenue)], ["Ad spend", fmt(t.spend)], ["Net profit", fmt(t.profit), t.profit >= 0 ? "text-gold" : "text-danger"], ["Confirmation", pct(r.confirmation)], ["Delivery", pct(r.delivery)], ["Returns", pct(r.returns)]] as const;
+      return [[`Revenue · ${M.range.short}`, fmt(t.revenue)], ["Ad spend", fmt(t.spend)], ["Net profit", fmt(t.profit), t.profit >= 0 ? "text-gold" : "text-danger"], ["Confirmation", pct(r.confirmation)], ["Delivery", pct(r.delivery)], ["Returns", pct(r.returns)]] as const;
     }
     if (type === "ad_accounts") {
       const t = totalsOf(M.perAccount, row.id);
-      return [["Spend 30D", fmt(t.spend)], ["Revenue", fmt(t.revenue)], ["Profit", fmt(t.profit), t.profit >= 0 ? "text-gold" : "text-danger"]] as const;
+      return [[`Spend · ${M.range.short}`, fmt(t.spend)], ["Revenue", fmt(t.revenue)], ["Profit", fmt(t.profit), t.profit >= 0 ? "text-gold" : "text-danger"]] as const;
     }
     if (type === "campaigns") {
       const t = totalsOf(M.perCampaign, row.id);
-      return [["Spend 30D", fmt(t.spend)], ["Revenue", fmt(t.revenue)], ["ROAS", t.spend ? (t.revenue / t.spend).toFixed(2) + "×" : "—", "text-gold"]] as const;
+      return [[`Spend · ${M.range.short}`, fmt(t.spend)], ["Revenue", fmt(t.revenue)], ["ROAS", t.spend ? (t.revenue / t.spend).toFixed(2) + "×" : "—", "text-gold"]] as const;
     }
     return null;
   })();

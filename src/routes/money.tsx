@@ -4,6 +4,7 @@ import { EntityList } from "@/components/tb/EntityList";
 import { PageHeader, StatCard, pct } from "@/components/tb/PageHeader";
 import { GlowCard } from "@/components/tb/primitives";
 import { OrderFunnel, ProfitChart } from "@/components/tb/charts";
+import { RangeSwitcher } from "@/components/tb/RangeSwitcher";
 import { EntityChip } from "@/components/tb/records";
 import { useTable, useTableLoading } from "@/lib/db";
 import { useCurrency } from "@/lib/currency";
@@ -31,10 +32,11 @@ function MoneyPage() {
   const brands = useTable("brands").filter((b) => !b.archived);
   const w = M.windowTotals;
   const r = rates(w);
-  const recent = [...expenses].sort((a, b) => (a.day < b.day ? 1 : -1)).filter((e) => !["product_cost", "shipping"].includes(e.category) || e.day >= M.today);
+  const recent = [...expenses].sort((a, b) => (a.day < b.day ? 1 : -1)).filter((e) => (!["product_cost", "shipping"].includes(e.category) || e.day >= M.today) && e.day <= M.range.to && (!M.range.from || e.day >= M.range.from));
   return (
     <AppShell title="Money">
-      <PageHeader title="Money" blurb="Net profit = revenue − ad spend − product cost − shipping − expenses. Last 30 days." />
+      <PageHeader title="Money" blurb={`Net profit = revenue − ad spend − product cost − shipping − expenses. ${M.range.short}.`} />
+      <RangeSwitcher className="mb-4" />
       <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label="Revenue" value={fmt(w.revenue)} />
         <StatCard label="Ad spend" value={fmt(w.spend)} delay={0.04} />

@@ -6,13 +6,13 @@ import { useTable } from "@/lib/db";
 import { useCurrency } from "@/lib/currency";
 import { platformLabel } from "@/lib/entities";
 import { rates, useMetrics } from "@/lib/metrics";
+import { diffDays } from "@/lib/range";
 import { cn } from "@/lib/utils";
 import { activitySentence, timeAgo, useRecords } from "./records";
 
 export function ProfitHeatmap() {
-  const { series } = useMetrics();
+  const { heatDays: data, range } = useMetrics();
   const { fmt } = useCurrency();
-  const data = series.slice(-30);
   const max = Math.max(1, ...data.map((d) => Math.abs(d.profit)));
   const total = data.reduce((a, d) => a + d.profit, 0);
   const [hover, setHover] = useState<number | null>(null);
@@ -22,12 +22,12 @@ export function ProfitHeatmap() {
       <div className="mb-4 flex items-end justify-between">
         <div>
           <h3 className="font-display text-base font-semibold">Profit Heatmap</h3>
-          <p className="text-xs text-muted-foreground">Last 30 days</p>
+          <p className="text-xs text-muted-foreground">{range.from && data.length === Math.max(14, diffDays(range.from, range.to) + 1) ? range.dates : `Last ${data.length} days`}</p>
         </div>
         <div className="text-right">
           <div className="tnum font-display text-xl font-semibold text-gold-gradient">{fmt(total)}</div>
           <div className="tnum h-4 text-xs text-muted-foreground">
-            {h ? `${new Date(h.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · ${fmt(h.profit)}` : "Monthly total"}
+            {h ? `${new Date(h.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · ${fmt(h.profit)}` : "Total"}
           </div>
         </div>
       </div>
@@ -50,25 +50,17 @@ export function ProfitHeatmap() {
   );
 }
 
-const ranges = { "7D": 7, "30D": 30, "90D": 90 } as const;
-
 export function ProfitChart() {
-  const [range, setRange] = useState<keyof typeof ranges>("30D");
-  const { series } = useMetrics();
+  const { series, range } = useMetrics();
   const { fmt, fromUSD } = useCurrency();
-  const data = series.slice(-ranges[range]).map((d) => ({ ...d, label: new Date(d.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }), v: fromUSD(d.profit) }));
+  const long = series.length > 200;
+  const data = series.map((d) => ({ ...d, label: new Date(d.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", ...(long ? { year: "2-digit" as const } : {}) }), v: fromUSD(d.profit) }));
+  const first = series[0]?.date, last = series[series.length - 1]?.date;
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-display text-base font-semibold">Profit</h3>
-        <div className="relative flex rounded-full border p-0.5">
-          {(Object.keys(ranges) as (keyof typeof ranges)[]).map((r) => (
-            <button key={r} onClick={() => setRange(r)} className={cn("relative h-8 rounded-full px-3 text-xs font-medium", range === r ? "text-primary-foreground" : "text-muted-foreground")}>
-              {range === r && <motion.span layoutId="range-pill" className="absolute inset-0 rounded-full bg-gold-gradient" />}
-              <span className="relative">{r}</span>
-            </button>
-          ))}
-        </div>
+        <span className="tnum text-xs text-muted-foreground">{series.length < 7 || !first || !last ? range.dates : first === last ? first : `${new Date(first).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${new Date(last).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}</span>
       </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
@@ -93,7 +85,7 @@ export function ProfitChart() {
                 ) : null
               }
             />
-            <Area key={range} type="monotone" dataKey="v" stroke="var(--gold)" strokeWidth={2.25} fill="url(#pf)" filter="url(#glow)" animationDuration={1200} activeDot={{ r: 5, fill: "var(--gold)", stroke: "var(--background)", strokeWidth: 2 }} />
+            <Area key={`${range.key}-${range.from}-${range.to}`} type="monotone" dataKey="v" stroke="var(--gold)" strokeWidth={2.25} fill="url(#pf)" filter="url(#glow)" animationDuration={1200} activeDot={{ r: 5, fill: "var(--gold)", stroke: "var(--background)", strokeWidth: 2 }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -137,7 +129,7 @@ export function AccountsHealth() {
 }
 
 export function OrderFunnel() {
-  const { windowTotals } = useMetrics();
+  const { windowTotals, range } = useMetrics();
   const r = rates(windowTotals);
   const items = [
     { label: "Confirmation", v: r.confirmation, sub: `${windowTotals.confirmed} / ${windowTotals.orders}` },
@@ -146,7 +138,7 @@ export function OrderFunnel() {
   ];
   return (
     <div>
-      <h3 className="mb-4 font-display text-base font-semibold">Order funnel <span className="text-xs font-normal text-muted-foreground">· 30D</span></h3>
+      <h3 className="mb-4 font-display text-base font-semibold">Order funnel <span className="text-xs font-normal text-muted-foreground">· {range.short}</span></h3>
       <div className="space-y-4">
         {items.map((it, i) => (
           <div key={it.label}>

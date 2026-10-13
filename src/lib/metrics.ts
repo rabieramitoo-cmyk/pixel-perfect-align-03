@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { riyadhDate, useTable, type Row } from "./db";
+import { useTable, type Row } from "./db";
 import { RATES_TO_USD } from "./currency";
+import { addDays, diffDays, previousBounds, useRange } from "./range";
 
 export type Day = { date: string; revenue: number; spend: number; expenses: number; profit: number; orders: number; confirmed: number; delivered: number; returned: number };
 export type Totals = { spend: number; revenue: number; expenses: number; profit: number; orders: number; confirmed: number; delivered: number; returned: number };
@@ -14,10 +15,14 @@ export const rates = (t: Pick<Totals, "orders" | "confirmed" | "delivered" | "re
   returns: t.confirmed ? t.returned / t.confirmed : 0,
 });
 
-export const WINDOW_DAYS = 30;
+const MAX_SERIES_DAYS = 730;
+const MIN_SERIES_DAYS = 7;
+const HEAT_MIN = 14;
+const HEAT_MAX = 90;
 
 /** Every number in the app is derived here from raw rows. Nothing is typed twice. */
 export function useMetrics() {
+  const { bounds, today } = useRange();
   const accounts = useTable("ad_accounts");
   const campaigns = useTable("campaigns");
   const daily = useTable("campaign_daily");
@@ -27,8 +32,7 @@ export function useMetrics() {
   const brands = useTable("brands");
 
   return useMemo(() => {
-    const today = riyadhDate();
-    const since = riyadhDate(-(WINDOW_DAYS - 1));
+    const since = bounds.from ?? "";
     const accById = new Map(accounts.map((a) => [a.id, a]));
     const campById = new Map(campaigns.map((c) => [c.id, c]));
 
@@ -47,7 +51,7 @@ export function useMetrics() {
       if (!x) { x = zero(); m.set(k, x); }
       return x;
     };
-    const inWindow = (d: string) => d >= since && d <= today;
+    const inWindow = (d: string) => d >= since && d <= bounds.to;
 
     for (const r of daily) {
       const s = num(r.spend), rev = num(r.revenue);
@@ -82,23 +86,46 @@ export function useMetrics() {
       p.spend += t.spend; p.revenue += t.revenue; p.expenses += t.expenses; p.profit += t.profit;
     }
 
-    // Continuous 90-day series
-    const series: Day[] = [];
-    for (let i = 89; i >= 0; i--) {
-      const d = riyadhDate(-i);
-      const x = days.get(d) ?? { date: d, ...zero() };
-      x.profit = x.revenue - x.spend - x.expenses;
-      series.push(x);
-    }
-    const windowTotals = series.slice(-WINDOW_DAYS).reduce((a, d) => {
-      a.spend += d.spend; a.revenue += d.revenue; a.expenses += d.expenses; a.profit += d.profit;
-      a.orders += d.orders; a.confirmed += d.confirmed; a.delivered += d.delivered; a.returned += d.returned; return a;
-    }, zero());
+    const finish = (x: Day) => { x.profit = x.revenue - x.spend - x.expenses; return x; };
+    const dayOf = (d: string) => finish(days.get(d) ?? { date: d, ...zero() });
+    const sumRange = (from: string, to: string) => {
+      const a = zero();
+      for (const d of days.values()) {
+        if (d.date < from || d.date > to) continue;
+        const x = finish(d);
+        a.spend += x.spend; a.revenue += x.revenue; a.expenses += x.expenses; a.profit += x.profit;
+        a.orders += x.orders; a.confirmed += x.confirmed; a.delivered += x.delivered; a.returned += x.returned;
+      }
+      return a;
+    };
+    const continuous = (from: string, to: string) => {
+      const out: Day[] = [];
+      for (let d = from; d <= to; d = addDays(d, 1)) out.push(dayOf(d));
+      return out;
+    };
 
+    // Earliest day with any data, for "All time"
+    let earliest = bounds.to;
+    for (const k of days.keys()) if (k < earliest) earliest = k;
+    const rangeFrom = bounds.from ?? earliest;
+    const spanFrom = addDays(bounds.to, -(MAX_SERIES_DAYS - 1));
+    const effFrom = rangeFrom < spanFrom ? spanFrom : rangeFrom;
+
+    const windowTotals = sumRange(rangeFrom, bounds.to);
+    const prev = bounds.from ? previousBounds(bounds.from, bounds.to) : null;
+    const previousTotals = prev ? sumRange(prev.from, prev.to) : zero();
+
+    // Range series for charts (padded to a week so a single day still draws a line)
+    const len = diffDays(effFrom, bounds.to) + 1;
+    const series = continuous(len < MIN_SERIES_DAYS ? addDays(bounds.to, -(MIN_SERIES_DAYS - 1)) : effFrom, bounds.to);
+    const heatLen = Math.min(HEAT_MAX, Math.max(HEAT_MIN, len));
+    const heatDays = continuous(addDays(bounds.to, -(heatLen - 1)), bounds.to);
+
+    // Streak always counts back from the app's real today, independent of the chosen range
     let streak = 0;
-    for (let i = series.length - 1; i >= 0; i--) {
-      const d = series[i]!;
-      if (d.revenue === 0 && d.spend === 0) { if (i === series.length - 1) continue; break; }
+    for (let i = 0; i < 400; i++) {
+      const d = dayOf(addDays(today, -i));
+      if (d.revenue === 0 && d.spend === 0) { if (i === 0) continue; break; }
       if (d.profit > 0) streak++; else break;
     }
 
@@ -138,8 +165,8 @@ export function useMetrics() {
     }
 
     const brandName = new Map(brands.map((b) => [b.id, b.name]));
-    return { today, series, windowTotals, perBrand, perAccount, perCampaign, perPlatform, streak, flaggedCampaigns, flaggedCreatives, alerts, brandName };
-  }, [accounts, campaigns, daily, orders, expenses, cc, brands]);
+    return { today, range: bounds, series, heatDays, windowTotals, previousTotals, perBrand, perAccount, perCampaign, perPlatform, streak, flaggedCampaigns, flaggedCreatives, alerts, brandName };
+  }, [accounts, campaigns, daily, orders, expenses, cc, brands, bounds, today]);
 }
 
 export const totalsOf = (m: Map<string, Totals>, id: string) => m.get(id) ?? zero();

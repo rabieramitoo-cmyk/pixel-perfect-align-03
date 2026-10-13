@@ -1,12 +1,13 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Command, FileText, LogOut, Moon, MoreHorizontal, Search, Settings, Sun, type LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ENTITIES, ENTITY_TYPES } from "@/lib/entities";
 import { useLookup, useRecords } from "./records";
 import { SettingsDialog } from "./SettingsDialog";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
+import { useDismiss } from "@/lib/use-dismiss";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { allNav, moreNav, primaryNav } from "./nav-config";
@@ -103,18 +104,6 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
 }
 
 const NAV_SPRING = { type: "spring", stiffness: 400, damping: 32 } as const;
-
-/** Close a popover on outside click or Escape. */
-function useDismiss(open: boolean, ref: RefObject<HTMLElement | null>, close: () => void) {
-  useEffect(() => {
-    if (!open) return;
-    const down = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) close(); };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
-    document.addEventListener("pointerdown", down);
-    document.addEventListener("keydown", key);
-    return () => { document.removeEventListener("pointerdown", down); document.removeEventListener("keydown", key); };
-  }, [open, ref, close]);
-}
 
 // The desktop and mobile bars are both in the DOM, so each needs its own layoutId. If they share one,
 // framer-motion hands the shared highlight to the hidden mobile bar and the desktop active pill loses its background.

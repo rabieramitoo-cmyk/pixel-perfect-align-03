@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { AppShell } from "@/components/tb/AppShell";
 import { PageHeader, pct } from "@/components/tb/PageHeader";
 import { GlowCard } from "@/components/tb/primitives";
+import { RangeSwitcher } from "@/components/tb/RangeSwitcher";
 import { useRecords } from "@/components/tb/records";
 import { useTable } from "@/lib/db";
 import { useCurrency } from "@/lib/currency";
@@ -31,6 +32,7 @@ function BrandsPage() {
   return (
     <AppShell title="Brands">
       <PageHeader title="Brands" blurb="The center of everything. Open a brand to see all its connected records." />
+      <RangeSwitcher className="mb-4" />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {brands.map((b, i) => {
           const t = totalsOf(M.perBrand, b.id); const r = rates(t);
@@ -42,7 +44,7 @@ function BrandsPage() {
                   <span className="font-display text-lg font-semibold">{b.name}</span>
                 </div>
                 <div className={cn("tnum font-display text-3xl font-semibold", t.profit >= 0 ? "text-gold-gradient" : "text-danger")}>{fmt(t.profit)}</div>
-                <div className="text-xs text-muted-foreground">Net profit · 30D</div>
+                <div className="text-xs text-muted-foreground">Net profit · {M.range.short}</div>
                 <div className="tnum mt-4 grid grid-cols-3 gap-2 text-xs">
                   <div><div className="text-muted-foreground">Revenue</div>{fmt(t.revenue, true)}</div>
                   <div><div className="text-muted-foreground">Spend</div>{fmt(t.spend, true)}</div>

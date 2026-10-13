@@ -3,6 +3,7 @@ import { AppShell } from "@/components/tb/AppShell";
 import { EntityList } from "@/components/tb/EntityList";
 import { PageHeader, StatCard } from "@/components/tb/PageHeader";
 import { GlowCard } from "@/components/tb/primitives";
+import { RangeSwitcher } from "@/components/tb/RangeSwitcher";
 import { EntityChip, FlagBadge, StatusBadge } from "@/components/tb/records";
 import { useTable, useTableLoading } from "@/lib/db";
 import { useCurrency } from "@/lib/currency";
@@ -32,10 +33,11 @@ function CampaignsPage() {
   return (
     <AppShell title="Campaigns">
       <PageHeader title="Campaigns" blurb="Spend and revenue here feed Money, Today and every brand and account total." />
+      <RangeSwitcher className="mb-4" />
       <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="Active campaigns" value={live.filter((r) => r.status === "active").length} />
-        <StatCard label="Spend 30D" value={fmt(spend)} delay={0.05} />
-        <StatCard label="Attributed revenue 30D" value={fmt(rev)} delay={0.1} />
+        <StatCard label={`Spend · ${M.range.short}`} value={fmt(spend)} delay={0.05} />
+        <StatCard label={`Revenue · ${M.range.short}`} value={fmt(rev)} delay={0.1} />
         <StatCard label="Flagged" value={M.flaggedCampaigns.size} tone={M.flaggedCampaigns.size ? "text-danger" : undefined} delay={0.15} />
       </div>
       <GlowCard tilt={false}>
@@ -45,7 +47,7 @@ function CampaignsPage() {
           { label: "Brand", cell: (r) => <EntityChip type="brands" id={r.brand_id} /> },
           { label: "Account", cell: (r) => <EntityChip type="ad_accounts" id={r.ad_account_id} /> },
           { label: "Creatives", cell: (r) => <span className="tnum">{cc.filter((l) => l.campaign_id === r.id).length}</span> },
-          { label: "Spend 30D", className: "text-right", cell: (r) => <span className="tnum">{fmt(totalsOf(M.perCampaign, r.id).spend)}</span> },
+          { label: `Spend · ${M.range.short}`, className: "text-right", cell: (r) => <span className="tnum">{fmt(totalsOf(M.perCampaign, r.id).spend)}</span> },
           { label: "ROAS", className: "text-right", cell: (r) => { const t = totalsOf(M.perCampaign, r.id); return <span className="tnum text-gold">{t.spend ? (t.revenue / t.spend).toFixed(2) + "×" : "—"}</span>; } },
         ]} />
       </GlowCard>

@@ -6,6 +6,8 @@ import { CountUp, GlowCard, Pill, ProgressRing, Sparkline } from "@/components/t
 import { TaskList, useTodayTasks } from "@/components/tb/TaskList";
 import { AccountsHealth, ActivityFeed, OrderFunnel, ProfitChart, ProfitHeatmap } from "@/components/tb/charts";
 import { useMetrics } from "@/lib/metrics";
+import { compareLabel } from "@/lib/range";
+import { RangeSwitcher } from "@/components/tb/RangeSwitcher";
 import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
@@ -40,14 +42,15 @@ function TodayBody() {
   const { fromUSD, symbol } = useCurrency();
   const done = tasks.filter((t) => t.done).length;
   const pct = tasks.length ? done / tasks.length : 0;
-  const t = M.series[M.series.length - 1]!, y = M.series[M.series.length - 2]!;
-  const last14 = M.series.slice(-14);
+  const t = M.windowTotals, y = M.previousTotals;
+  const sparkDays = M.series.slice(-30);
+  const cmp = compareLabel(M.range.key);
   const roas = (d: { revenue: number; spend: number }) => (d.spend ? d.revenue / d.spend : 0);
   const kpis = [
-    { key: "spend", label: "Ad Spend Today", value: t.spend, prev: y.spend, money: true, spark: last14.map((d) => d.spend) },
-    { key: "revenue", label: "Revenue Today", value: t.revenue, prev: y.revenue, money: true, spark: last14.map((d) => d.revenue) },
-    { key: "profit", label: "Net Profit Today", value: t.profit, prev: y.profit, money: true, spark: last14.map((d) => d.profit) },
-    { key: "roas", label: "ROAS", value: roas(t), prev: roas(y), money: false, spark: last14.map(roas) },
+    { key: "spend", label: `Ad Spend · ${M.range.short}`, value: t.spend, prev: y.spend, money: true, spark: sparkDays.map((d) => d.spend) },
+    { key: "revenue", label: `Revenue · ${M.range.short}`, value: t.revenue, prev: y.revenue, money: true, spark: sparkDays.map((d) => d.revenue) },
+    { key: "profit", label: `Net Profit · ${M.range.short}`, value: t.profit, prev: y.profit, money: true, spark: sparkDays.map((d) => d.profit) },
+    { key: "roas", label: `ROAS · ${M.range.short}`, value: roas(t), prev: roas(y), money: false, spark: sparkDays.map(roas) },
   ];
   const date = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
@@ -60,6 +63,7 @@ function TodayBody() {
         </div>
         <Pill className="text-gold"><Flame className="h-3.5 w-3.5" /><span className="tnum">{M.streak}</span> profitable days</Pill>
       </motion.div>
+      <RangeSwitcher />
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <GlowCard className="py-8" contentClassName="flex h-full flex-col items-center justify-center" tilt={false}>
@@ -73,6 +77,7 @@ function TodayBody() {
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
           {kpis.map((k, i) => {
             const delta = k.prev ? ((k.value - k.prev) / Math.abs(k.prev)) * 100 : 0;
+            const showDelta = M.range.key !== "all";
             const good = k.key === "spend" ? delta <= 0 : delta >= 0;
             return (
               <GlowCard key={k.key} delay={0.05 * i} contentClassName="flex h-full flex-col justify-between gap-4">
@@ -81,10 +86,15 @@ function TodayBody() {
                   {k.money ? <CountUp value={fromUSD(k.value)} prefix={symbol} /> : <CountUp value={k.value} decimals={2} suffix="×" />}
                 </div>
                 <div className="flex items-end justify-between">
-                  <span className={cn("tnum flex items-center text-xs font-medium", good ? "text-success" : "text-danger")}>
-                    {delta >= 0 ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
-                    {Math.abs(delta).toFixed(1)}%
-                  </span>
+                  {showDelta ? (
+                    <span className={cn("tnum flex flex-col text-xs font-medium", good ? "text-success" : "text-danger")}>
+                      <span className="flex items-center">
+                        {delta >= 0 ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
+                        {Math.abs(delta).toFixed(1)}%
+                      </span>
+                      <span className="text-[10px] font-normal text-muted-foreground">{cmp}</span>
+                    </span>
+                  ) : <span />}
                   <Sparkline data={k.spark} positive={good} />
                 </div>
               </GlowCard>
