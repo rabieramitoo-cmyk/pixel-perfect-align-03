@@ -15,6 +15,13 @@
       "when": 1791516019421,
       "tag": "0001_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791919195885,
+      "tag": "0002_morocco_timezone",
+      "breakpoints": true
     }
   ]
 }
