@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Backdrop, MagneticButton } from "@/components/tb/primitives";
+import { quickLogin } from "@/lib/quick-login.functions";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -77,6 +78,26 @@ function Login() {
         <MagneticButton type="submit" disabled={busy || ownerExists === null} className="mt-6 w-full">
           {busy ? "…" : setup ? "Create account" : "Enter"}
         </MagneticButton>
+        {ownerExists && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true); setMsg(null);
+              try {
+                const { tokenHash } = await quickLogin();
+                const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
+                if (error) throw error;
+              } catch (err) {
+                setMsg({ kind: "err", text: err instanceof Error ? err.message : "Quick access failed" });
+              }
+              setBusy(false);
+            }}
+            className="mt-3 h-11 w-full rounded-[14px] border text-sm font-medium text-muted-foreground hover:border-gold hover:text-foreground"
+          >
+            Quick enter (no password)
+          </button>
+        )}
       </motion.form>
     </div>
   );
