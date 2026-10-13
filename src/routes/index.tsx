@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
 });
 
 function greeting() {
-  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", hour: "numeric", hour12: false }).format(new Date()));
+  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Casablanca", hour: "numeric", hour12: false }).format(new Date()));
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
 
@@ -52,7 +52,7 @@ function TodayBody() {
     { key: "profit", label: `Net Profit · ${M.range.short}`, value: t.profit, prev: y.profit, money: true, spark: sparkDays.map((d) => d.profit) },
     { key: "roas", label: `ROAS · ${M.range.short}`, value: roas(t), prev: roas(y), money: false, spark: sparkDays.map(roas) },
   ];
-  const date = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", weekday: "long", day: "numeric", month: "long" }).format(new Date());
+  const date = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Casablanca", weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
   return (
     <div className="space-y-4">

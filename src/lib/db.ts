@@ -123,4 +123,4 @@ export function useBootstrap(enabled: boolean) {
 }
 
 export const riyadhDate = (offsetDays = 0) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(new Date(Date.now() + offsetDays * 86400000));
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Casablanca" }).format(new Date(Date.now() + offsetDays * 86400000));
